@@ -43,7 +43,7 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      units_config_path: units.yml
+      units_config_path: /etc/systemd-remote/units.yml
       server:
         port: ${systemd_remote.port}
         address: "${systemd_remote.address}"
@@ -51,6 +51,28 @@ write_files:
           ca_cert: /etc/systemd-remote/tls/ca.crt
           server_cert: /etc/systemd-remote/tls/service.crt
           server_key: /etc/systemd-remote/tls/service.key
+  - path: /etc/systemd/system/systemd-remote.service
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description="Systemd Remote Update Service"
+      Wants=network-online.target
+      After=network-online.target
+      StartLimitIntervalSec=0
+
+      [Service]
+      Environment=SYSTEMD_REMOTE_CONFIG_FILE=/etc/systemd-remote/config.yml
+      User=root
+      Group=root
+      Type=simple
+      Restart=always
+      RestartSec=1
+      WorkingDirectory=/opt/dynamic-configurations
+      ExecStart=/usr/local/bin/systemd-remote
+
+      [Install]
+      WantedBy=multi-user.target
 #configuration-auto-updater
   - path: /etc/configurations-auto-updater/etcd/ca.crt
     owner: root:root
@@ -82,8 +104,8 @@ write_files:
     content: |
       filesystem:
         path: "/opt/dynamic-configurations"
-        files_permission: "600"
-        directories_permission: 600"
+        files_permission: "700"
+        directories_permission: 700"
       etcd_client:
         prefix: "${etcd.key_prefix}"
         endpoints:
@@ -115,6 +137,28 @@ write_files:
             ca_cert: "/etc/systemd-remote/tls/ca.crt"
             client_cert: "/etc/systemd-remote/tls/service.crt"
             client_key: "/etc/systemd-remote/tls/service.key"
+  - path: /etc/systemd/system/configurations-auto-updater.service
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description="Configurations Updating Service"
+      Wants=network-online.target
+      After=network-online.target
+      StartLimitIntervalSec=0
+
+      [Service]
+      Environment=CONFS_AUTO_UPDATER_CONFIG_FILE=/etc/configurations-auto-updater/config.yml
+      User=root
+      Group=root
+      Type=simple
+      Restart=always
+      RestartSec=1
+      WorkingDirectory=/opt/dynamic-configurations
+      ExecStart=/usr/local/bin/configurations-auto-updater
+
+      [Install]
+      WantedBy=multi-user.target
 #bootstrap configs
 %{ for config in bootstrap_configs ~}
   - path: ${config.path}
