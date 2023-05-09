@@ -159,13 +159,87 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
+#terraform-backend-etcd
+%{ if terraform_backend_etcd_service.enabled ~}
+  - path: /etc/terraform-backend-etcd/tls/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, terraform_backend_etcd_service.tls.ca_certificate)}
+  - path: /etc/terraform-backend-etcd/tls/server.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, terraform_backend_etcd_service.tls.server_certificate)}
+  - path: /etc/terraform-backend-etcd/tls/server.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, terraform_backend_etcd_service.tls.server_key)}
+  - path: /etc/terraform-backend-etcd/auth.yml
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${terraform_backend_etcd_service.auth.username}:${terraform_backend_etcd_service.auth.password}
+  - path: /etc/terraform-backend-etcd/config.yml
+    owner: root:root
+    permissions: "0400"
+    content: |
+      server:
+        port: ${terraform_backend_etcd_service.port}
+        address: "${terraform_backend_etcd_service.address}"
+        basic_auth: /etc/terraform-backend-etcd/auth.yml
+        tls:
+          certificate: /etc/terraform-backend-etcd/tls/server.crt
+          key: /etc/terraform-backend-etcd/tls/server.key
+        debug_mode: false
+      etcd_client:
+        endpoints:
+%{ for endpoint in etcd.endpoints ~}
+          - "${endpoint}"
+%{ endfor ~}
+        connection_timeout: "300s"
+        request_timeout: "300s"
+        retry_interval: "10s"
+        retries: 30
+        auth:
+          ca_cert: "/etc/configurations-auto-updater/etcd/ca.crt"
+%{ if etcd.client.certificate != "" ~}
+          client_cert: "/etc/configurations-auto-updater/etcd/client.crt"
+          client_key: "/etc/configurations-auto-updater/etcd/client.key"
+%{ else ~}
+          password_auth: /etc/configurations-auto-updater/etcd/password.yml
+%{ endif ~}
+      remote_termination: false
+  - path: /etc/systemd/system/terraform-backend-etcd.service
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description="Terraform Backend Service"
+      Wants=network-online.target
+      After=network-online.target
+      StartLimitIntervalSec=0
+
+      [Service]
+      Environment=ETCD_BACKEND_CONFIG_FILE=/etc/terraform-backend-etcd/config.yml
+      User=root
+      Group=root
+      Type=simple
+      Restart=always
+      RestartSec=1
+      ExecStart=/usr/local/bin/terraform-backend-etcd
+
+      [Install]
+      WantedBy=multi-user.target
+%{ endif ~}
 #bootstrap configs
 %{ for config in bootstrap_configs ~}
   - path: ${config.path}
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, config.value)}
+      ${indent(6, config.content)}
 %{ endfor ~}
 #bootstrap secrets
 %{ for secret in bootstrap_secrets ~}
@@ -173,7 +247,7 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, secret.value)}
+      ${indent(6, secret.content)}
 %{ endfor ~}
 
 %{ if install_dependencies ~}
@@ -195,9 +269,12 @@ runcmd:
   - mv linux-amd64/terracd /usr/local/bin/terracd
   - rm -r linux-amd64
   #Install etcd terraform backend service
-  - curl -L https://github.com/Ferlab-Ste-Justine/terraform-backend-etcd/releases/download/v0.3.2/terraform-backend-etcd_0.3.2_linux_amd64.tar.gz -o /tmp/terraform-backend-etcd.tar.gz
+  - curl -L https://github.com/Ferlab-Ste-Justine/terraform-backend-etcd/releases/download/v0.4.0/terraform-backend-etcd_0.4.0_linux_amd64.tar.gz -o /tmp/terraform-backend-etcd.tar.gz
   - mkdir -p /tmp/terraform-backend-etcd
   - tar zxvf /tmp/terraform-backend-etcd.tar.gz -C /tmp/terraform-backend-etcd
+  - cp /tmp/terraform-backend-etcd/terraform-backend-etcd /usr/local/bin/terraform-backend-etcd
+  - rm /tmp/terraform-backend-etcd.tar.gz
+  - rm -r /tmp/terraform-backend-etcd
   #Install configurations-auto-updater
   - curl -L http://http://${host_ip}:9999/configurations-auto-updater /usr/local/bin/configurations-auto-updater
   - chmod +x /usr/local/bin/configurations-auto-updater
@@ -209,6 +286,12 @@ runcmd:
   - systemctl start configurations-auto-updater
   - systemctl enable systemd-remote
   - systemctl start systemd-remote
+%{ if terraform_backend_etcd_service.enabled ~}
+  - cp /etc/terraform-backend-etcd/tls/ca.crt /usr/local/share/ca-certificates
+  - update-ca-certificates
+  - systemctl enable terraform-backend-etcd
+  - systemctl start terraform-backend-etcd
+%{ endif ~}
 %{ for service in bootstrap_services ~}
   - systemctl enable ${service}
   - systemctl start ${service}

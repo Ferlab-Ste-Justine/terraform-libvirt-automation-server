@@ -50,6 +50,7 @@ locals {
             ssh_admin_user = var.ssh_admin_user
             admin_user_password = var.admin_user_password
             systemd_remote = var.systemd_remote
+            terraform_backend_etcd_service = var.terraform_backend_etcd_service
             etcd = var.etcd
             bootstrap_secrets = var.bootstrap_secrets
             bootstrap_configs = var.bootstrap_configs

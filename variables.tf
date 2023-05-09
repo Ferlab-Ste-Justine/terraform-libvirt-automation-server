@@ -116,7 +116,7 @@ variable "install_dependencies" {
 }
 
 variable "etcd" {
-  description = "Parameters for the etcd backend of configurations-auto-updater service"
+  description = "Parameters for the etcd cluster to access configs and optionally store terraform backends"
   type        = object({
     key_prefix = string
     endpoints = list(string)
@@ -128,6 +128,38 @@ variable "etcd" {
       password = string
     })
   })
+}
+
+variable "terraform_backend_etcd_service" {
+  description = "Optional terraform backend service using etcd as a backend"
+  type        = object({
+    enabled = bool
+    port = number
+    address = string
+    tls = object({
+      ca_certificate = string
+      server_certificate = string
+      server_key = string
+    })
+    auth = object({
+      username = string
+      password = string
+    })
+  })
+  default = {
+    enabled = false
+    port = 0
+    address = ""
+    tls = {
+      ca_certificate = ""
+      server_certificate = ""
+      server_key = ""
+    }
+    auth = {
+      username = ""
+      password = ""
+    }
+  }
 }
 
 variable "systemd_remote" {
@@ -146,7 +178,7 @@ variable "bootstrap_secrets" {
   sensitive = true
   type = list(object({
     path  = string
-    value = string
+    content = string
   }))
 }
 
@@ -154,7 +186,7 @@ variable "bootstrap_configs" {
   description = "Configs to bootstrap the orchestration"
   type = list(object({
     path  = string
-    value = string
+    content = string
   }))
 }
 
