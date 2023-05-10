@@ -161,6 +161,15 @@ write_files:
       WantedBy=multi-user.target
 #terraform-backend-etcd
 %{ if terraform_backend_etcd.enabled ~}
+  - path: /etc/terraform-backend-etcd/terraform/backend-vars
+    owner: root:root
+    permissions: "0400"
+    content: |
+      TF_HTTP_USERNAME=${terraform_backend_etcd.auth.username}
+      TF_HTTP_PASSWORD=${terraform_backend_etcd.auth.password}
+      TF_HTTP_UPDATE_METHOD=PUT
+      TF_HTTP_LOCK_METHOD=PUT
+      TF_HTTP_UNLOCK_METHOD=DELETE
   - path: /etc/terraform-backend-etcd/etcd/ca.crt
     owner: root:root
     permissions: "0400"
@@ -204,7 +213,7 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${terraform_backend_etcd.auth.username}:${terraform_backend_etcd.auth.password}
+      ${terraform_backend_etcd.auth.username}: "${terraform_backend_etcd.auth.password}"
   - path: /etc/terraform-backend-etcd/config.yml
     owner: root:root
     permissions: "0400"
