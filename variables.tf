@@ -148,7 +148,6 @@ variable "terraform_backend_etcd" {
       password = string
     })
     etcd = object({
-      key_prefix = string
       endpoints = list(string)
       ca_certificate = string
       client = object({

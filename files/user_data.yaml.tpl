@@ -105,7 +105,7 @@ write_files:
       filesystem:
         path: "/opt/dynamic-configurations"
         files_permission: "700"
-        directories_permission: 700"
+        directories_permission: "700"
       etcd_client:
         prefix: "${configurations_auto_updater.etcd.key_prefix}"
         endpoints:
