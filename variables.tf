@@ -206,6 +206,7 @@ variable "bootstrap_secrets" {
     path  = string
     content = string
   }))
+  default = []
 }
 
 variable "bootstrap_configs" {
@@ -214,11 +215,13 @@ variable "bootstrap_configs" {
     path  = string
     content = string
   }))
+  default = []
 }
 
 variable "bootstrap_services" {
   description = "Systemd services to enable and start"
   type = list(string)
+    default = []
 }
 
 //Temporary, to remove
