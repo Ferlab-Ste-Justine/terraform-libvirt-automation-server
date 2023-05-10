@@ -115,22 +115,24 @@ variable "install_dependencies" {
   default = true
 }
 
-variable "etcd" {
-  description = "Parameters for the etcd cluster to access configs and optionally store terraform backends"
+variable "configurations_auto_updater" {
+  description = "Parameters for the configurations auto updater"
   type        = object({
-    key_prefix = string
-    endpoints = list(string)
-    ca_certificate = string
-    client = object({
-      certificate = string
-      key = string
-      username = string
-      password = string
+    etcd = object({
+      key_prefix = string
+      endpoints = list(string)
+      ca_certificate = string
+      client = object({
+        certificate = string
+        key = string
+        username = string
+        password = string
+      })
     })
   })
 }
 
-variable "terraform_backend_etcd_service" {
+variable "terraform_backend_etcd" {
   description = "Optional terraform backend service using etcd as a backend"
   type        = object({
     enabled = bool
@@ -145,6 +147,17 @@ variable "terraform_backend_etcd_service" {
       username = string
       password = string
     })
+    etcd = object({
+      key_prefix = string
+      endpoints = list(string)
+      ca_certificate = string
+      client = object({
+        certificate = string
+        key = string
+        username = string
+        password = string
+      })
+    })
   })
   default = {
     enabled = false
@@ -158,6 +171,17 @@ variable "terraform_backend_etcd_service" {
     auth = {
       username = ""
       password = ""
+    }
+    etcd = {
+      key_prefix = ""
+      endpoints = []
+      ca_certificate = ""
+      client = {
+        certificate = ""
+        key = ""
+        username = ""
+        password = ""
+      }
     }
   }
 }

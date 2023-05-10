@@ -49,9 +49,9 @@ locals {
             ssh_admin_public_key = var.ssh_admin_public_key
             ssh_admin_user = var.ssh_admin_user
             admin_user_password = var.admin_user_password
+            configurations_auto_updater = var.configurations_auto_updater
             systemd_remote = var.systemd_remote
-            terraform_backend_etcd_service = var.terraform_backend_etcd_service
-            etcd = var.etcd
+            terraform_backend_etcd = var.terraform_backend_etcd
             bootstrap_secrets = var.bootstrap_secrets
             bootstrap_configs = var.bootstrap_configs
             bootstrap_services = var.bootstrap_services

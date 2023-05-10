@@ -78,25 +78,25 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, etcd.ca_certificate)}
-%{ if etcd.client.certificate != "" ~}
+      ${indent(6, configurations_auto_updater.etcd.ca_certificate)}
+%{ if configurations_auto_updater.etcd.client.certificate != "" ~}
   - path: /etc/configurations-auto-updater/etcd/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, etcd.client.certificate)}
+      ${indent(6, configurations_auto_updater.etcd.client.certificate)}
   - path: /etc/configurations-auto-updater/etcd/client.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, etcd.client.key)}
+      ${indent(6, configurations_auto_updater.etcd.client.key)}
 %{ else ~}
   - path: /etc/configurations-auto-updater/etcd/password.yml
     owner: root:root
     permissions: "0400"
     content: |
-      username: ${etcd.client.username}
-      password: ${etcd.client.password}
+      username: ${configurations_auto_updater.etcd.client.username}
+      password: ${configurations_auto_updater.etcd.client.password}
 %{ endif ~}
   - path: /etc/configurations-auto-updater/config.yml
     owner: root:root
@@ -107,9 +107,9 @@ write_files:
         files_permission: "700"
         directories_permission: 700"
       etcd_client:
-        prefix: "${etcd.key_prefix}"
+        prefix: "${configurations_auto_updater.etcd.key_prefix}"
         endpoints:
-%{ for endpoint in etcd.endpoints ~}
+%{ for endpoint in configurations_auto_updater.etcd.endpoints ~}
           - "${endpoint}"
 %{ endfor ~}
         connection_timeout: "60s"
@@ -118,7 +118,7 @@ write_files:
         retries: 15
         auth:
           ca_cert: "/etc/configurations-auto-updater/etcd/ca.crt"
-%{ if etcd.client.certificate != "" ~}
+%{ if configurations_auto_updater.etcd.client.certificate != "" ~}
           client_cert: "/etc/configurations-auto-updater/etcd/client.crt"
           client_key: "/etc/configurations-auto-updater/etcd/client.key"
 %{ else ~}
@@ -160,34 +160,58 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 #terraform-backend-etcd
-%{ if terraform_backend_etcd_service.enabled ~}
+%{ if terraform_backend_etcd.enabled ~}
+  - path: /etc/terraform-backend-etcd/etcd/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, terraform_backend_etcd.etcd.ca_certificate)}
+%{ if terraform_backend_etcd.etcd.client.certificate != "" ~}
+  - path: /etc/terraform-backend-etcd/etcd/client.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, terraform_backend_etcd.etcd.client.certificate)}
+  - path: /etc/terraform-backend-etcd/etcd/client.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, terraform_backend_etcd.etcd.client.key)}
+%{ else ~}
+  - path: /etc/terraform-backend-etcd/etcd/password.yml
+    owner: root:root
+    permissions: "0400"
+    content: |
+      username: ${terraform_backend_etcd.etcd.client.username}
+      password: ${terraform_backend_etcd.etcd.client.password}
+%{ endif ~}
   - path: /etc/terraform-backend-etcd/tls/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd_service.tls.ca_certificate)}
+      ${indent(6, terraform_backend_etcd.tls.ca_certificate)}
   - path: /etc/terraform-backend-etcd/tls/server.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd_service.tls.server_certificate)}
+      ${indent(6, terraform_backend_etcd.tls.server_certificate)}
   - path: /etc/terraform-backend-etcd/tls/server.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd_service.tls.server_key)}
+      ${indent(6, terraform_backend_etcd.tls.server_key)}
   - path: /etc/terraform-backend-etcd/auth.yml
     owner: root:root
     permissions: "0400"
     content: |
-      ${terraform_backend_etcd_service.auth.username}:${terraform_backend_etcd_service.auth.password}
+      ${terraform_backend_etcd.auth.username}:${terraform_backend_etcd.auth.password}
   - path: /etc/terraform-backend-etcd/config.yml
     owner: root:root
     permissions: "0400"
     content: |
       server:
-        port: ${terraform_backend_etcd_service.port}
-        address: "${terraform_backend_etcd_service.address}"
+        port: ${terraform_backend_etcd.port}
+        address: "${terraform_backend_etcd.address}"
         basic_auth: /etc/terraform-backend-etcd/auth.yml
         tls:
           certificate: /etc/terraform-backend-etcd/tls/server.crt
@@ -195,7 +219,7 @@ write_files:
         debug_mode: false
       etcd_client:
         endpoints:
-%{ for endpoint in etcd.endpoints ~}
+%{ for endpoint in terraform_backend_etcd.etcd.endpoints ~}
           - "${endpoint}"
 %{ endfor ~}
         connection_timeout: "300s"
@@ -203,12 +227,12 @@ write_files:
         retry_interval: "10s"
         retries: 30
         auth:
-          ca_cert: "/etc/configurations-auto-updater/etcd/ca.crt"
-%{ if etcd.client.certificate != "" ~}
-          client_cert: "/etc/configurations-auto-updater/etcd/client.crt"
-          client_key: "/etc/configurations-auto-updater/etcd/client.key"
+          ca_cert: "/etc/terraform-backend-etcd/etcd/ca.crt"
+%{ if terraform_backend_etcd.etcd.client.certificate != "" ~}
+          client_cert: "/etc/terraform-backend-etcd/etcd/client.crt"
+          client_key: "/etc/terraform-backend-etcd/etcd/client.key"
 %{ else ~}
-          password_auth: /etc/configurations-auto-updater/etcd/password.yml
+          password_auth: /etc/terraform-backend-etcd/etcd/password.yml
 %{ endif ~}
       remote_termination: false
   - path: /etc/systemd/system/terraform-backend-etcd.service
@@ -286,7 +310,7 @@ runcmd:
   - systemctl start configurations-auto-updater
   - systemctl enable systemd-remote
   - systemctl start systemd-remote
-%{ if terraform_backend_etcd_service.enabled ~}
+%{ if terraform_backend_etcd.enabled ~}
   - cp /etc/terraform-backend-etcd/tls/ca.crt /usr/local/share/ca-certificates
   - update-ca-certificates
   - systemctl enable terraform-backend-etcd
