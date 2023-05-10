@@ -126,7 +126,7 @@ write_files:
 %{ endif ~}
       grpc_notifications:
         - endpoint: "${systemd_remote.address}:${systemd_remote.port}"
-          filter: "^(.*[.]service)|(.*[.]timer)|units.yml)$"
+          filter: "^(.*[.]service)|(.*[.]timer)|(units.yml)$"
           trim_key_path: true
           max_chunk_size: 1048576
           connection_timeout: "60s"
