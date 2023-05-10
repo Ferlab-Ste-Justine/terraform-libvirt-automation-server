@@ -300,12 +300,13 @@ runcmd:
   - rm /tmp/terraform-backend-etcd.tar.gz
   - rm -r /tmp/terraform-backend-etcd
   #Install configurations-auto-updater
-  - curl -L http://http://${host_ip}:9999/configurations-auto-updater /usr/local/bin/configurations-auto-updater
+  - curl -L http://${host_ip}:9999/configurations-auto-updater -o /usr/local/bin/configurations-auto-updater
   - chmod +x /usr/local/bin/configurations-auto-updater
   #Install systemd-remote
-  - curl -L http://http://${host_ip}:9999/systemd-remote /usr/local/bin/systemd-remote
+  - curl -L http://${host_ip}:9999/systemd-remote -o /usr/local/bin/systemd-remote
   - chmod +x /usr/local/bin/systemd-remote
 %{ endif ~}
+  - mkdir -p /opt/dynamic-configurations
   - systemctl enable configurations-auto-updater
   - systemctl start configurations-auto-updater
   - systemctl enable systemd-remote
