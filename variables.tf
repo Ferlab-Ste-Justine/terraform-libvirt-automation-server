@@ -191,9 +191,11 @@ variable "systemd_remote" {
   type        = object({
     port = number
     address = string
-    ca_certificate = string
-    service_certificate = string
-    service_key = string
+    tls = object({
+      ca_certificate = string
+      server_certificate = string
+      server_key = string
+    })
   })
 }
 

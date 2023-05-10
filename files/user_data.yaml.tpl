@@ -28,17 +28,17 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote.ca_certificate)}
+      ${indent(6, systemd_remote.tls.ca_certificate)}
   - path: /etc/systemd-remote/tls/service.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote.service_certificate)}
+      ${indent(6, systemd_remote.tls.server_certificate)}
   - path: /etc/systemd-remote/tls/service.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote.service_key)}
+      ${indent(6, systemd_remote.tls.server_key)}
   - path: /etc/systemd-remote/config.yml
     owner: root:root
     permissions: "0400"
