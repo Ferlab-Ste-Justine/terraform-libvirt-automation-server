@@ -270,7 +270,7 @@ write_files:
 %{ for config in bootstrap_configs ~}
   - path: ${config.path}
     owner: root:root
-    permissions: "0400"
+    permissions: "0700"
     content: |
       ${indent(6, config.content)}
 %{ endfor ~}
@@ -297,7 +297,7 @@ runcmd:
   - mv terraform /usr/local/bin/terraform
   - rm /tmp/terraform.zip
   #Install terracd
-  - curl -L https://github.com/Ferlab-Ste-Justine/terracd/releases/download/v0.12.0/terracd-linux-amd64.zip -o /tmp/terracd.zip
+  - curl -L https://github.com/Ferlab-Ste-Justine/terracd/releases/download/v0.13.0/terracd-linux-amd64.zip -o /tmp/terracd.zip
   - unzip /tmp/terracd.zip
   - mv linux-amd64/terracd /usr/local/bin/terracd
   - rm -r linux-amd64
