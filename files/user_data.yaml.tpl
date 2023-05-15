@@ -309,8 +309,12 @@ runcmd:
   - rm /tmp/terraform-backend-etcd.tar.gz
   - rm -r /tmp/terraform-backend-etcd
   #Install configurations-auto-updater
-  - curl -L http://${host_ip}:9999/configurations-auto-updater -o /usr/local/bin/configurations-auto-updater
-  - chmod +x /usr/local/bin/configurations-auto-updater
+  - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.4.0/configurations-auto-updater_0.4.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz
+  - mkdir -p /tmp/configurations-auto-updater
+  - tar zxvf /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
+  - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/configurations-auto-updater
+  - rm -rf /tmp/configurations-auto-updater
+  - rm -f /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz
   #Install systemd-remote
   - curl -L http://${host_ip}:9999/systemd-remote -o /usr/local/bin/systemd-remote
   - chmod +x /usr/local/bin/systemd-remote
