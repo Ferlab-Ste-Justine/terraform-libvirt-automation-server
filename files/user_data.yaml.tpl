@@ -316,8 +316,12 @@ runcmd:
   - rm -rf /tmp/configurations-auto-updater
   - rm -f /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz
   #Install systemd-remote
-  - curl -L http://${host_ip}:9999/systemd-remote -o /usr/local/bin/systemd-remote
-  - chmod +x /usr/local/bin/systemd-remote
+  - curl -L https://github.com/Ferlab-Ste-Justine/systemd-remote/releases/download/v0.1.0/systemd-remote_0.1.0_linux_amd64.tar.gz -o /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz
+  - mkdir -p /tmp/systemd-remote
+  - tar zxvf /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz -C /tmp/systemd-remote
+  - cp /tmp/systemd-remote/systemd-remote /usr/local/bin/systemd-remote
+  - rm -rf /tmp/systemd-remote
+  - rm -f /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz
 %{ endif ~}
   - mkdir -p /opt/dynamic-configurations
   - systemctl enable configurations-auto-updater
