@@ -51,8 +51,8 @@ module "fluentbit_configs" {
       }] : []
     )
     forward = var.fluentbit.forward
-    etcd = var.fluentbit.etcd
   }
+  etcd = var.fluentbit.etcd
 }
 
 module "chrony_configs" {
