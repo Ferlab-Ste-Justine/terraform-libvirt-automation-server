@@ -223,6 +223,46 @@ variable "bootstrap_services" {
     default = []
 }
 
+variable "fluentbit" {
+  description = "Fluent-bit configuration"
+  type = object({
+    enabled = bool
+    confs_auto_updater_tag = string
+    systemd_remote_tag = string
+    terraform_backend_etcd_tag = string
+    node_exporter_tag = string
+    metrics = object({
+      enabled = bool
+      port    = number
+    })
+    forward = object({
+      domain = string
+      port = number
+      hostname = string
+      shared_key = string
+      ca_cert = string
+    })
+  })
+  default = {
+    enabled = false
+    confs_auto_updater_tag = ""
+    systemd_remote_tag = ""
+    terraform_backend_etcd_tag = ""
+    node_exporter_tag = ""
+    metrics = {
+      enabled = false
+      port = 0
+    }
+    forward = {
+      domain = ""
+      port = 0
+      hostname = ""
+      shared_key = ""
+      ca_cert = ""
+    }
+  }
+}
+
 //Temporary, to remove
 variable "host_ip" {
   description = "Temporary variable to past host ip to troubleshoot with local binaries"

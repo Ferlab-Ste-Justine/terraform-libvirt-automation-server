@@ -27,6 +27,33 @@ module "prometheus_node_exporter_configs" {
   install_dependencies = var.install_dependencies
 }
 
+module "fluentbit_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=feature/fluentbit"
+  install_dependencies = var.install_dependencies
+  fluentbit = {
+    metrics = var.fluentbit.metrics
+    systemd_services = concat(
+      [{
+        tag = var.fluentbit.confs_auto_updater_tag
+        service = "configurations-auto-updater.service"
+      },
+      {
+        tag = var.fluentbit.systemd_remote_tag
+        service = "systemd-remote.service"
+      },
+      {
+        tag = var.fluentbit.node_exporter_tag
+        service = "node-exporter.service"
+      }],
+      var.terraform_backend_etcd.enabled ? [{
+        tag = var.fluentbit.terraform_backend_etcd_tag
+        service = "terraform-backend-etcd.service"
+      }] : []
+    )
+    forward = var.fluentbit.forward
+  }
+}
+
 module "chrony_configs" {
   source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=main"
   install_dependencies = var.install_dependencies
@@ -56,6 +83,7 @@ locals {
             bootstrap_configs = var.bootstrap_configs
             bootstrap_services = var.bootstrap_services
             install_dependencies = var.install_dependencies
+            fluentbit = var.fluentbit
             //To remove
             host_ip = var.host_ip
           }
@@ -71,6 +99,11 @@ locals {
       filename     = "chrony.cfg"
       content_type = "text/cloud-config"
       content      = module.chrony_configs.configuration
+    }] : [],
+    var.fluentbit.enabled ? [{
+      filename     = "fluent_bit.cfg"
+      content_type = "text/cloud-config"
+      content      = module.fluentbit_configs.configuration
     }] : []
   )
 }

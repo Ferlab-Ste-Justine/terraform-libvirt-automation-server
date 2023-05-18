@@ -301,6 +301,7 @@ runcmd:
   - unzip /tmp/terracd.zip
   - mv linux-amd64/terracd /usr/local/bin/terracd
   - rm -r linux-amd64
+%{ if terraform_backend_etcd.enabled ~}
   #Install etcd terraform backend service
   - curl -L https://github.com/Ferlab-Ste-Justine/terraform-backend-etcd/releases/download/v0.4.0/terraform-backend-etcd_0.4.0_linux_amd64.tar.gz -o /tmp/terraform-backend-etcd.tar.gz
   - mkdir -p /tmp/terraform-backend-etcd
@@ -308,6 +309,7 @@ runcmd:
   - cp /tmp/terraform-backend-etcd/terraform-backend-etcd /usr/local/bin/terraform-backend-etcd
   - rm /tmp/terraform-backend-etcd.tar.gz
   - rm -r /tmp/terraform-backend-etcd
+%{ endif ~}
   #Install configurations-auto-updater
   - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.4.0/configurations-auto-updater_0.4.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz
   - mkdir -p /tmp/configurations-auto-updater
