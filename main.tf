@@ -51,6 +51,7 @@ module "fluentbit_configs" {
       }] : []
     )
     forward = var.fluentbit.forward
+    etcd = var.fluentbit.etcd
   }
 }
 

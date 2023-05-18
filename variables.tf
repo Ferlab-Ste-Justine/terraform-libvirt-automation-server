@@ -242,6 +242,18 @@ variable "fluentbit" {
       shared_key = string
       ca_cert = string
     })
+    etcd = object({
+      enabled = bool
+      key_prefix = string
+      endpoints = list(string)
+      ca_certificate = string
+      client = object({
+        certificate = string
+        key = string
+        username = string
+        password = string
+      })
+    })
   })
   default = {
     enabled = false
@@ -259,6 +271,18 @@ variable "fluentbit" {
       hostname = ""
       shared_key = ""
       ca_cert = ""
+    }
+    etcd = {
+      enabled = false
+      key_prefix = ""
+      endpoints = []
+      ca_certificate = ""
+      client = {
+        certificate = ""
+        key = ""
+        username = ""
+        password = ""
+      }
     }
   }
 }
