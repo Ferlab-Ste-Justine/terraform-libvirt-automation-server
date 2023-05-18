@@ -85,8 +85,6 @@ locals {
             bootstrap_services = var.bootstrap_services
             install_dependencies = var.install_dependencies
             fluentbit = var.fluentbit
-            //To remove
-            host_ip = var.host_ip
           }
         )
       },

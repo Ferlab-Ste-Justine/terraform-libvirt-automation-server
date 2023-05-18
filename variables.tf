@@ -286,9 +286,3 @@ variable "fluentbit" {
     }
   }
 }
-
-//Temporary, to remove
-variable "host_ip" {
-  description = "Temporary variable to past host ip to troubleshoot with local binaries"
-  type = string
-}
