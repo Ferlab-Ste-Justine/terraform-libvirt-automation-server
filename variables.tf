@@ -115,37 +115,22 @@ variable "install_dependencies" {
   default = true
 }
 
-variable "configurations_auto_updater" {
-  description = "Parameters for the configurations auto updater"
-  type        = object({
-    etcd = object({
-      key_prefix = string
-      endpoints = list(string)
-      ca_certificate = string
-      client = object({
-        certificate = string
-        key = string
-        username = string
-        password = string
-      })
-    })
-  })
-}
-
 variable "terraform_backend_etcd" {
   description = "Optional terraform backend service using etcd as a backend"
   type        = object({
     enabled = bool
-    port = number
-    address = string
-    tls = object({
-      ca_certificate = string
-      server_certificate = string
-      server_key = string
-    })
-    auth = object({
-      username = string
-      password = string
+    server = object({
+      port = number
+      address = string
+      tls = object({
+        ca_certificate = string
+        server_certificate = string
+        server_key = string
+      })
+      auth = object({
+        username = string
+        password = string
+      })
     })
     etcd = object({
       endpoints = list(string)
@@ -160,16 +145,18 @@ variable "terraform_backend_etcd" {
   })
   default = {
     enabled = false
-    port = 0
-    address = ""
-    tls = {
-      ca_certificate = ""
-      server_certificate = ""
-      server_key = ""
-    }
-    auth = {
-      username = ""
-      password = ""
+    server = {
+      port = 0
+      address = ""
+      tls = {
+        ca_certificate = ""
+        server_certificate = ""
+        server_key = ""
+      }
+      auth = {
+        username = ""
+        password = ""
+      }
     }
     etcd = {
       key_prefix = ""
@@ -188,13 +175,34 @@ variable "terraform_backend_etcd" {
 variable "systemd_remote" {
   description = "Parameters for systemd-remote service. Certs are used by client and server for mtls communication"
   type        = object({
-    port = number
-    address = string
-    tls = object({
-      ca_certificate = string
-      server_certificate = string
-      server_key = string
+    server = object({
+      port = number
+      address = string
+      tls = object({
+        ca_certificate = string
+        server_certificate = string
+        server_key = string
+      })
     })
+    client = object({
+      tls = object({
+        ca_certificate     = string
+        client_certificate = string
+        client_key         = string
+      })
+      etcd = object({
+        key_prefix = string
+        endpoints = list(string)
+        ca_certificate = string
+        client = object({
+          certificate = string
+          key = string
+          username = string
+          password = string
+        })
+      })
+    })
+    sync_directory = string
   })
 }
 
@@ -227,7 +235,7 @@ variable "fluentbit" {
   description = "Fluent-bit configuration"
   type = object({
     enabled = bool
-    confs_auto_updater_tag = string
+    systemd_remote_source_tag = string
     systemd_remote_tag = string
     terraform_backend_etcd_tag = string
     node_exporter_tag = string
@@ -257,7 +265,7 @@ variable "fluentbit" {
   })
   default = {
     enabled = false
-    confs_auto_updater_tag = ""
+    systemd_remote_source_tag = ""
     systemd_remote_tag = ""
     terraform_backend_etcd_tag = ""
     node_exporter_tag = ""
