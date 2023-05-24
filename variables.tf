@@ -27,12 +27,14 @@ variable "libvirt_network" {
     network_id = string
     ip = string
     mac = string
+    dns_servers = list(string)
   })
   default = {
     network_name = ""
     network_id = ""
     ip = ""
     mac = ""
+    dns_servers = []
   }
 }
 
