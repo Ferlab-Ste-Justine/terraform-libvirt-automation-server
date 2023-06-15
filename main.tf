@@ -21,7 +21,7 @@ locals {
 }
 
 module "network_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.10.0"
   network_interfaces = concat(
     [for idx, libvirt_network in var.libvirt_networks: {
       ip = libvirt_network.ip
@@ -43,12 +43,12 @@ module "network_configs" {
 }
 
 module "prometheus_node_exporter_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.10.0"
   install_dependencies = var.install_dependencies
 }
 
 module "fluentbit_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=v0.10.0"
   install_dependencies = var.install_dependencies
   fluentbit = {
     metrics = var.fluentbit.metrics
@@ -75,23 +75,66 @@ module "fluentbit_configs" {
   etcd = var.fluentbit.etcd
 }
 
+module "systemd_remote_source_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//configurations-auto-updater?ref=v0.10.0"
+  install_dependencies = var.install_dependencies
+  filesystem = {
+    path = var.systemd_remote.sync_directory
+    files_permission = "700"
+    directories_permission = "700"
+  }
+  etcd = {
+    key_prefix = var.systemd_remote.client.etcd.key_prefix
+    endpoints = var.systemd_remote.client.etcd.endpoints
+    connection_timeout = "60s"
+    request_timeout = "60s"
+    retry_interval = "4s"
+    retries = 15
+    auth = {
+      ca_certificate = var.systemd_remote.client.etcd.ca_certificate
+      client_certificate = var.systemd_remote.client.etcd.client.certificate
+      client_key = var.systemd_remote.client.etcd.client.key
+      username = var.systemd_remote.client.etcd.client.username
+      password = var.systemd_remote.client.etcd.client.password
+    }
+  }
+  grpc_notifications = [{
+    endpoint = "${var.systemd_remote.server.address}:${var.systemd_remote.server.port}"
+    filter   = "^(.*[.]service)|(.*[.]timer)|(units.yml)$"
+    trim_key_path = true
+    max_chunk_size = 1048576
+    retries = 15
+    retry_interval = "4s"
+    connection_timeout = "60s"
+    request_timeout = "60s"
+    auth = {
+      ca_cert = var.systemd_remote.client.tls.ca_certificate
+      client_cert = var.systemd_remote.client.tls.client_certificate
+      client_key = var.systemd_remote.client.tls.client_key
+    }
+  }]
+  naming = {
+    binary = "systemd-remote-source"
+    service = "systemd-remote-source"
+  }
+  user = "root"
+}
+
 module "systemd_remote_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//systemd-remote?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//systemd-remote?ref=v0.10.0"
   server = var.systemd_remote.server
-  client = var.systemd_remote.client
-  sync_directory = var.systemd_remote.sync_directory
   install_dependencies = var.install_dependencies
 }
 
 module "terraform_backend_etcd_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//terraform-backend-etcd?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//terraform-backend-etcd?ref=v0.10.0"
   server = var.terraform_backend_etcd.server
   etcd = var.terraform_backend_etcd.etcd
   install_dependencies = var.install_dependencies
 }
 
 module "chrony_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.10.0"
   install_dependencies = var.install_dependencies
   chrony = {
     servers  = var.chrony.servers
@@ -128,6 +171,11 @@ locals {
         filename     = "system_remote.cfg"
         content_type = "text/cloud-config"
         content      = module.systemd_remote_configs.configuration
+      },
+      {
+        filename     = "system_remote_source.cfg"
+        content_type = "text/cloud-config"
+        content      = module.systemd_remote_source_configs.configuration
       }
     ],
     var.terraform_backend_etcd.enabled ? [{
