@@ -65,6 +65,7 @@ This module takes the following variables as input:
     - **Global Service Configs**: /etc/fluent-bit-customization/default-config/fluent-bit-service.conf
     - **Systemd Inputs**: /etc/fluent-bit-customization/default-config/fluent-bit-inputs.conf
     - **Forward Output**: /etc/fluent-bit-customization/default-config/fluent-bit-output.conf
+  - **source**: Indicates the source of the dynamic config. Can be either **etcd** or **git**.
   - **etcd**: Parameters to fetch fluent-bit configurations dynamically from an etcd cluster. It has the following keys:
     - **key_prefix**: Etcd key prefix to search for fluent-bit configuration
     - **endpoints**: Endpoints of the etcd cluster. Endpoints should have the format `<ip>:<port>`
@@ -105,6 +106,7 @@ This module takes the following variables as input:
       - **client_key**: Client's private key that accompanies the certificate.
   - **sync_directory**: Directory on the server's filesystem where the dynamic configuration will be synchronized. Note that additionally to this directory, **systemd-remote** will forward unit files changes to the **/etc/systemd/system** directory.
 - **systemd_remote_source**: Configuration for the source of files that will be forwared to **systemd-remote** and otherwise synchronized to the filesystem. Either an etcd or git source should be specified. It has the following keys:
+  - **source**: Indicates the source of the dynamic config. Can be either **etcd** or **git**.
   - **etcd**: Parameters for an etcd source. It should have the following keys:
     - **key_prefix**: Key prefix that should be scanned for configuration files
     - **endpoints**: Endpoints of the etcd cluster. The format of each endpoint should be `<ip>:<port>`.
