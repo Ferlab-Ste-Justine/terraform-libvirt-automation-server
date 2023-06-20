@@ -18,12 +18,12 @@ locals {
       hostname = null
     }]
   )
-  fluentbit_updater_etcd = var.fluentbit.enabled && var.fluentbit_dynamic_config.enabled && length(var.fluentbit_dynamic_config.etcd.endpoints) > 0
-  fluentbit_updater_git = var.fluentbit.enabled && var.fluentbit_dynamic_config.enabled && var.fluentbit_dynamic_config.git.repo != ""
+  fluentbit_updater_etcd = var.fluentbit.enabled && var.fluentbit_dynamic_config.enabled && var.fluentbit_dynamic_config.source == "etcd"
+  fluentbit_updater_git = var.fluentbit.enabled && var.fluentbit_dynamic_config.enabled && var.fluentbit_dynamic_config.source == "git"
 }
 
 module "network_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.10.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.11.0"
   network_interfaces = concat(
     [for idx, libvirt_network in var.libvirt_networks: {
       ip = libvirt_network.ip
@@ -45,12 +45,12 @@ module "network_configs" {
 }
 
 module "prometheus_node_exporter_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.10.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.11.0"
   install_dependencies = var.install_dependencies
 }
 
 module "fluentbit_updater_etcd_configs" {
-  source = "./terraform-cloudinit-templates/configurations-auto-updater"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//configurations-auto-updater?ref=v0.11.0"
   install_dependencies = var.install_dependencies
   filesystem = {
     path = "/etc/fluent-bit-customization/dynamic-config"
@@ -84,7 +84,7 @@ module "fluentbit_updater_etcd_configs" {
 }
 
 module "fluentbit_updater_git_configs" {
-  source = "./terraform-cloudinit-templates/gitsync"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//gitsync?ref=v0.11.0"
   install_dependencies = var.install_dependencies
   filesystem = {
     path = "/etc/fluent-bit-customization/dynamic-config"
@@ -104,7 +104,7 @@ module "fluentbit_updater_git_configs" {
 }
 
 module "fluentbit_configs" {
-  source = "./terraform-cloudinit-templates/fluent-bit"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=v0.11.0"
   install_dependencies = var.install_dependencies
   fluentbit = {
     metrics = var.fluentbit.metrics
@@ -135,7 +135,7 @@ module "fluentbit_configs" {
 }
 
 module "systemd_remote_source_etcd_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//configurations-auto-updater?ref=v0.10.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//configurations-auto-updater?ref=v0.11.0"
   install_dependencies = var.install_dependencies
   filesystem = {
     path = var.systemd_remote.sync_directory
@@ -180,7 +180,7 @@ module "systemd_remote_source_etcd_configs" {
 }
 
 module "systemd_remote_source_git_configs" {
-  source = "./terraform-cloudinit-templates/gitsync"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//gitsync?ref=v0.11.0"
   install_dependencies = var.install_dependencies
   filesystem = {
     path = var.systemd_remote.sync_directory
@@ -211,20 +211,20 @@ module "systemd_remote_source_git_configs" {
 }
 
 module "systemd_remote_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//systemd-remote?ref=v0.10.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//systemd-remote?ref=v0.11.0"
   server = var.systemd_remote.server
   install_dependencies = var.install_dependencies
 }
 
 module "terraform_backend_etcd_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//terraform-backend-etcd?ref=v0.10.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//terraform-backend-etcd?ref=v0.11.0"
   server = var.terraform_backend_etcd.server
   etcd = var.terraform_backend_etcd.etcd
   install_dependencies = var.install_dependencies
 }
 
 module "chrony_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.10.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.11.0"
   install_dependencies = var.install_dependencies
   chrony = {
     servers  = var.chrony.servers
@@ -263,12 +263,12 @@ locals {
         content      = module.systemd_remote_configs.configuration
       }
     ],
-    length(var.systemd_remote_source.etcd.endpoints) > 0 ? [{
+    var.systemd_remote_source.source == "etcd" ? [{
       filename     = "system_remote_source.cfg"
       content_type = "text/cloud-config"
       content      = module.systemd_remote_source_etcd_configs.configuration
     }]: [],
-    var.systemd_remote_source.git.repo != "" ? [{
+    var.systemd_remote_source.source == "git" ? [{
       filename     = "system_remote_source.cfg"
       content_type = "text/cloud-config"
       content      = module.systemd_remote_source_git_configs.configuration

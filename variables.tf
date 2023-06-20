@@ -196,6 +196,7 @@ variable "systemd_remote" {
 variable "systemd_remote_source" {
   description = "Parameters for systemd-remote source service."
   type        = object({
+    source = string
     etcd = object({
       key_prefix = string
       endpoints = list(string)
@@ -218,6 +219,11 @@ variable "systemd_remote_source" {
       trusted_gpg_keys = list(string)
     })
   })
+
+  validation {
+    condition     = contains(["etcd", "git"], var.systemd_remote_source.source)
+    error_message = "systemd_remote_source.source must be 'etcd' or 'git'."
+  }
 }
 
 variable "bootstrap_secrets" {
@@ -289,6 +295,7 @@ variable "fluentbit_dynamic_config" {
   description = "Parameters for fluent-bit dynamic config if it is enabled"
   type = object({
     enabled = bool
+    source  = string
     etcd    = object({
       key_prefix     = string
       endpoints      = list(string)
@@ -313,6 +320,7 @@ variable "fluentbit_dynamic_config" {
   })
   default = {
     enabled = false
+    source = "etcd"
     etcd = {
       key_prefix     = ""
       endpoints      = []
@@ -334,5 +342,10 @@ variable "fluentbit_dynamic_config" {
         server_ssh_fingerprint = ""
       }
     }
+  }
+
+  validation {
+    condition     = contains(["etcd", "git"], var.fluentbit_dynamic_config.source)
+    error_message = "fluentbit_dynamic_config.source must be 'etcd' or 'git'."
   }
 }
