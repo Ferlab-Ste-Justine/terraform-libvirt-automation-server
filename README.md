@@ -6,7 +6,7 @@ It is meant to be espescially useful in an on-prem setup where you start with ve
 
 It has two kinds of workflows:
   - Static workflow defined via cloud-init that can be used to bootstrap (and change by reprovisioning the server) the etcd cluster that the server will take its configurations from. Note that these jobs maybe be overwriten dynamically once you have a running etcd cluster that you can read dynamic configurations from.
-  - Dynamic workflows defined in etcd. Systemd unit files, units on/off status, other dependent configuration files as well as optional fluent-bit output redirection are editable this way.
+  - Dynamic workflows defined in either in a git repo or in an etcd key prefix. Systemd unit files, units on/off status, other dependent configuration files as well as optional fluent-bit output redirection are editable this way.
 
 The server has the following tools integrated to support terraform jobs:
 - terraform: https://www.terraform.io/
@@ -48,7 +48,7 @@ This module takes the following variables as input:
   - **servers**: List of ntp servers to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#server)
   - **pools**: A list of ntp server pools to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#pool)
   - **makestep**: An object containing remedial instructions if the clock of the vm is significantly out of sync at startup. It is an object containing two properties, **threshold** and **limit** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#makestep)
-- **fluentbit**: Optional fluend configuration to securely route logs to a fluend/fluent-bit node using the forward plugin. Alternatively, configuration can be 100% dynamic by specifying the parameters of an etcd store to fetch the configuration from. It has the following keys:
+- **fluentbit**: Optional fluent-bit configuration to securely route logs to a fluend/fluent-bit node using the forward plugin. Alternatively, configuration can be 100% dynamic by specifying the parameters of an etcd store or git repo to fetch the configuration from. It has the following keys:
   - **enabled**: If set the false (the default), fluent-bit will not be installed.
   - **systemd_remote_source_tag**: Tag to assign to logs coming from the process that reads configuration from etcd and forwards systemd unit changes to **systemd-remote**.
   - **systemd_remote_tag**: Tag to assign to logs coming from **systemd-remote**
@@ -60,11 +60,12 @@ This module takes the following variables as input:
     - **hostname**: Unique hostname identifier for the vm
     - **shared_key**: Secret shared key with the remote fluentd node to authentify the client
     - **ca_cert**: CA certificate that signed the remote fluentd node's server certificate (used to authentify it)
+**fluentbit_dynamic_config**: Optional configuration to update fluent-bit configuration dynamically either from an etcd key prefix or a path in a git repo.
+  - **enabled**: Boolean flag to indicate whether dynamic configuration is enabled at all. If set to true, configurations will be set dynamically. The default configurations can still be referenced as needed by the dynamic configuration. They are at the following paths:
+    - **Global Service Configs**: /etc/fluent-bit-customization/default-config/fluent-bit-service.conf
+    - **Systemd Inputs**: /etc/fluent-bit-customization/default-config/fluent-bit-inputs.conf
+    - **Forward Output**: /etc/fluent-bit-customization/default-config/fluent-bit-output.conf
   - **etcd**: Parameters to fetch fluent-bit configurations dynamically from an etcd cluster. It has the following keys:
-    - **enabled**: If set to true, configurations will be set dynamically. The default configurations can still be referenced as needed by the dynamic configuration. They are at the following paths:
-      - **Global Service Configs**: /etc/fluent-bit-customization/default-config/fluent-bit-service.conf
-      - **Systemd Inputs**: /etc/fluent-bit-customization/default-config/fluent-bit-inputs.conf
-      - **Forward Output**: /etc/fluent-bit-customization/default-config/fluent-bit-output.conf
     - **key_prefix**: Etcd key prefix to search for fluent-bit configuration
     - **endpoints**: Endpoints of the etcd cluster. Endpoints should have the format `<ip>:<port>`
     - **ca_certificate**: CA certificate against which the server certificates of the etcd cluster will be verified for authenticity
@@ -73,6 +74,14 @@ This module takes the following variables as input:
       - **key**: Client private tls key to authentify with. To be used for certificate authentication.
       - **username**: Client's username. To be used for username/password authentication.
       - **password**: Client's password. To be used for username/password authentication.
+  - **git**: Parameters to fetch fluent-bit configurations dynamically from an git repo. It has the following keys:
+    - **repo**: Url of the git repository. It should have the ssh format.
+    - **ref**: Git reference (usually branch) to checkout in the repository
+    - **path**: Path to sync from in the git repository. If the empty string is passed, syncing will happen from the root of the repository.
+    - **trusted_gpg_keys**: List of trusted gpp keys to verify the signature of the top commit. If an empty list is passed, the commit signature will not be verified.
+    - **auth**: Authentication to the git server. It should have the following keys:
+      - **client_ssh_key** Private client ssh key to authentication to the server.
+      - **server_ssh_fingerprint**: Public ssh fingerprint of the server that will be used to authentify it.
 - **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
 - **bootstrap_secrets**: List of static secrets to pass to the server. Each entry should have the following keys:
   - **path**: Filesystem path of the secret on the server.
@@ -94,16 +103,25 @@ This module takes the following variables as input:
       - **ca_certificate**: CA certificate that will authentify the server's certificate.
       - **client_certificate**: Client certificate to authentify with the server.
       - **client_key**: Client's private key that accompanies the certificate.
-    - **etcd**: Parameters for the connection with etcd. It should have the following keys:
-      - **key_prefix**: Key prefix that should be scanned for configuration files
-      - **endpoints**: Endpoints of the etcd cluster. The format of each endpoint should be `<ip>:<port>`.
-      - **ca_certificate**: CA certificate used to authentify the etcd servers' certificates
-      - **client**: Client authentication parameters to authentify to the etcd cluster. It should have the following keys:
-        - **certificate**: Client's certificate if certificate authentication is used.
-        - **key**: Client's private key if certificate authentication is used.
-        - **username**: Client's username if username/password authentication is used.
-        - **password**: Client's password is username/password authentication is used.
   - **sync_directory**: Directory on the server's filesystem where the dynamic configuration will be synchronized. Note that additionally to this directory, **systemd-remote** will forward unit files changes to the **/etc/systemd/system** directory.
+- **systemd_remote_source**: Configuration for the source of files that will be forwared to **systemd-remote** and otherwise synchronized to the filesystem. Either an etcd or git source should be specified. It has the following keys:
+  - **etcd**: Parameters for an etcd source. It should have the following keys:
+    - **key_prefix**: Key prefix that should be scanned for configuration files
+    - **endpoints**: Endpoints of the etcd cluster. The format of each endpoint should be `<ip>:<port>`.
+    - **ca_certificate**: CA certificate used to authentify the etcd servers' certificates
+    - **client**: Client authentication parameters to authentify to the etcd cluster. It should have the following keys:
+      - **certificate**: Client's certificate if certificate authentication is used.
+      - **key**: Client's private key if certificate authentication is used.
+      - **username**: Client's username if username/password authentication is used.
+      - **password**: Client's password is username/password authentication is used.
+  - **git**: Parameters for a git repository source. It has the following keys:
+    - **repo**: Url of the git repository. It should have the ssh format.
+    - **ref**: Git reference (usually branch) to checkout in the repository
+    - **path**: Path to sync from in the git repository. If the empty string is passed, syncing will happen from the root of the repository.
+    - **trusted_gpg_keys**: List of trusted gpp keys to verify the signature of the top commit. If an empty list is passed, the commit signature will not be verified.
+    - **auth**: Authentication to the git server. It should have the following keys:
+      - **client_ssh_key** Private client ssh key to authentication to the server.
+      - **server_ssh_fingerprint**: Public ssh fingerprint of the server that will be used to authentify it.
 - **terraform_backend_etcd**: Parameters to setup an optional http service acting as an etcd backend for terraform. It should have the following keys:
   - **enabled**: If true, the service will be setup and enabled.
   - **server**: Terraform-facing parameters for the http server.
@@ -137,16 +155,16 @@ The example runs harmless mock workflows that are safe to run locally. You shoul
 
 ## Dynamic Configuration Worflow
 
-All configuration files in the **systemd_remote.client.etcd.key_prefix** etcd key prefix will be sychronized with **systemd_remote.sync_directory** on the server.
+All configuration files in the etcd key prefix or git repository (at the given path of the given reference) will be sychronized with **systemd_remote.sync_directory** on the server.
 
 All changes addition/update/deletion to files with a **.service** suffix, files with a **.timer** suffix or to a file named **units.yml** will additionally be pushed to **systemd-remote** which will adjust systemd units accordingly.
 
 How **systemd-remote** reconciles the system with file changes is best read in the project's README documentation: https://github.com/Ferlab-Ste-Justine/systemd-remote
 
-Additionally, if fluent-bit is enabled dynamically (**fluentbit.etcd.enabled**), the content of the directory **/etc/fluent-bit-customization/dynamic-config** will be synched (and fluentbit will receive a reload signal on change) with the content of the **fluentbit.etcd.key_prefix** key prefix in etcd. Fluent-bit will use **/etc/fluent-bit-customization/dynamic-config/index.conf** as its entrypoint configuration.
+Additionally, if fluent-bit is enabled dynamically (**fluentbit.etcd.enabled**), the content of the directory **/etc/fluent-bit-customization/dynamic-config** will be synchronized (and fluentbit will receive a reload signal on change) with the content of an etcd key prefix or git repository (at the given path of the given reference). Fluent-bit will use **/etc/fluent-bit-customization/dynamic-config/index.conf** as its entrypoint configuration.
 
 ## Dependency Considerations
 
 Given its intended role as the origin of orchestration, care should be taken not to couple the provisioning of the server with some of the dependencies being provisioned.
 
-In particular, all etcd resources used to customize the server should be done in a terraform orchestration that is separate from the server, that way if ever etcd is down and needs to be restored, you'll be able to orchestrate it in a static workflow.
+In particular, any etcd resources used to setup the dynamic configuration of the server (if an etcd source is used instead of a git repo for dynamic configuration retrieval) should be done in a terraform orchestration that is separate from the server, that way if ever etcd is down and needs to be restored, you'll be able to orchestrate it in a static workflow.

@@ -188,19 +188,35 @@ variable "systemd_remote" {
         client_certificate = string
         client_key         = string
       })
-      etcd = object({
-        key_prefix = string
-        endpoints = list(string)
-        ca_certificate = string
-        client = object({
-          certificate = string
-          key = string
-          username = string
-          password = string
-        })
-      })
     })
     sync_directory = string
+  })
+}
+
+variable "systemd_remote_source" {
+  description = "Parameters for systemd-remote source service."
+  type        = object({
+    etcd = object({
+      key_prefix = string
+      endpoints = list(string)
+      ca_certificate = string
+      client = object({
+        certificate = string
+        key = string
+        username = string
+        password = string
+      })
+    })
+    git = object({
+      repo = string
+      ref  = string
+      path = string
+      auth = object({
+        client_ssh_key         = string
+        server_ssh_fingerprint = string
+      })
+      trusted_gpg_keys = list(string)
+    })
   })
 }
 
@@ -248,18 +264,6 @@ variable "fluentbit" {
       shared_key = string
       ca_cert = string
     })
-    etcd = object({
-      enabled = bool
-      key_prefix = string
-      endpoints = list(string)
-      ca_certificate = string
-      client = object({
-        certificate = string
-        key = string
-        username = string
-        password = string
-      })
-    })
   })
   default = {
     enabled = false
@@ -278,16 +282,56 @@ variable "fluentbit" {
       shared_key = ""
       ca_cert = ""
     }
+  }
+}
+
+variable "fluentbit_dynamic_config" {
+  description = "Parameters for fluent-bit dynamic config if it is enabled"
+  type = object({
+    enabled = bool
+    etcd    = object({
+      key_prefix     = string
+      endpoints      = list(string)
+      ca_certificate = string
+      client         = object({
+        certificate = string
+        key         = string
+        username    = string
+        password    = string
+      })
+    })
+    git     = object({
+      repo             = string
+      ref              = string
+      path             = string
+      trusted_gpg_keys = list(string)
+      auth             = object({
+        client_ssh_key         = string
+        server_ssh_fingerprint = string
+      })
+    })
+  })
+  default = {
+    enabled = false
     etcd = {
-      enabled = false
-      key_prefix = ""
-      endpoints = []
+      key_prefix     = ""
+      endpoints      = []
       ca_certificate = ""
-      client = {
+      client         = {
         certificate = ""
-        key = ""
-        username = ""
-        password = ""
+        key         = ""
+        username    = ""
+        password    = ""
+      }
+    }
+    git  = {
+      repo             = ""
+      ref              = ""
+      path             = ""
+      trusted_gpg_keys = []
+      auth             = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
       }
     }
   }
