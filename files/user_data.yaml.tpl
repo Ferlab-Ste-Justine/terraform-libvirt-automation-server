@@ -22,6 +22,7 @@ users:
     ssh_authorized_keys:
       - "${ssh_admin_public_key}"
 
+%{ if length(bootstrap_configs) > 0 || length(bootstrap_secrets) > 0 ~}
 write_files:
 #bootstrap configs
 %{ for config in bootstrap_configs ~}
@@ -39,6 +40,7 @@ write_files:
     content: |
       ${indent(6, secret.content)}
 %{ endfor ~}
+%{ endif ~}
 
 %{ if install_dependencies ~}
 packages:
