@@ -23,13 +23,13 @@ variable "volume_id" {
 variable "libvirt_networks" {
   description = "Parameters of libvirt network connections if a libvirt networks are used."
   type = list(object({
-    network_name = string
-    network_id = string
+    network_name = optional(string, "")
+    network_id = optional(string, "")
     prefix_length = string
     ip = string
     mac = string
-    gateway = string
-    dns_servers = list(string)
+    gateway = optional(string, "")
+    dns_servers = optional(list(string), [])
   }))
   default = []
 }
@@ -41,8 +41,8 @@ variable "macvtap_interfaces" {
     prefix_length = string
     ip            = string
     mac           = string
-    gateway       = string
-    dns_servers   = list(string)
+    gateway       = optional(string, "")
+    dns_servers   = optional(list(string), [])
   }))
   default = []
 }
@@ -134,10 +134,10 @@ variable "terraform_backend_etcd" {
       endpoints = list(string)
       ca_certificate = string
       client = object({
-        certificate = string
-        key = string
-        username = string
-        password = string
+        certificate = optional(string, "")
+        key = optional(string, "")
+        username = optional(string, "")
+        password = optional(string, "")
       })
     })
   })
@@ -197,26 +197,47 @@ variable "systemd_remote_source" {
   description = "Parameters for systemd-remote source service."
   type        = object({
     source = string
-    etcd = object({
+    etcd = optional(object({
       key_prefix = string
       endpoints = list(string)
       ca_certificate = string
       client = object({
-        certificate = string
-        key = string
-        username = string
-        password = string
+        certificate = optional(string, "")
+        key = optional(string, "")
+        username = optional(string, "")
+        password = optional(string, "")
       })
+    }), {
+      key_prefix = ""
+      endpoints = []
+      ca_certificate = ""
+      client = {
+        certificate = ""
+        key = ""
+        username = ""
+        password = ""
+      }
     })
-    git = object({
+    git = optional(object({
       repo = string
       ref  = string
       path = string
       auth = object({
         client_ssh_key         = string
         server_ssh_fingerprint = string
+        client_ssh_user        = optional(string, "")
       })
-      trusted_gpg_keys = list(string)
+      trusted_gpg_keys = optional(list(string), [])
+    }), {
+      repo = ""
+      ref  = ""
+      path = ""
+      auth = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
+        client_ssh_user        = ""
+      }
+      trusted_gpg_keys = []
     })
   })
 
@@ -236,9 +257,12 @@ variable "pushgateway" {
         server_cert = string
         server_key  = string
       })
-      basic_auth = object({
+      basic_auth = optional(object({
         username        = string
         hashed_password = string
+      }), {
+        username        = ""
+        hashed_password = ""
       })
     })
     client  = object({
@@ -247,9 +271,12 @@ variable "pushgateway" {
         client_cert = string
         client_key  = string
       })
-      basic_auth = object({
+      basic_auth = optional(object({
         username = string
         password = string
+      }), {
+        username = ""
+        password = ""
       })
     })
   })
@@ -302,7 +329,7 @@ variable "bootstrap_configs" {
 variable "bootstrap_services" {
   description = "Systemd services to enable and start"
   type = list(string)
-    default = []
+  default = []
 }
 
 variable "fluentbit" {
@@ -313,9 +340,12 @@ variable "fluentbit" {
     systemd_remote_tag = string
     terraform_backend_etcd_tag = string
     node_exporter_tag = string
-    metrics = object({
+    metrics = optional(object({
       enabled = bool
       port    = number
+    }), {
+      enabled = false
+      port    = 0
     })
     forward = object({
       domain = string
@@ -350,26 +380,47 @@ variable "fluentbit_dynamic_config" {
   type = object({
     enabled = bool
     source  = string
-    etcd    = object({
+    etcd    = optional(object({
       key_prefix     = string
       endpoints      = list(string)
       ca_certificate = string
       client         = object({
-        certificate = string
-        key         = string
-        username    = string
-        password    = string
+        certificate = optional(string, "")
+        key         = optional(string, "")
+        username    = optional(string, "")
+        password    = optional(string, "")
       })
+    }), {
+      key_prefix     = ""
+      endpoints      = []
+      ca_certificate = ""
+      client         = {
+        certificate = ""
+        key         = ""
+        username    = ""
+        password    = ""
+      }
     })
-    git     = object({
+    git     = optional(object({
       repo             = string
       ref              = string
       path             = string
-      trusted_gpg_keys = list(string)
+      trusted_gpg_keys = optional(list(string), [])
       auth             = object({
         client_ssh_key         = string
         server_ssh_fingerprint = string
+        client_ssh_user        = optional(string, "")
       })
+    }), {
+      repo             = ""
+      ref              = ""
+      path             = ""
+      trusted_gpg_keys = []
+      auth             = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
+        client_ssh_user        = ""
+      }
     })
   })
   default = {
@@ -394,6 +445,7 @@ variable "fluentbit_dynamic_config" {
       auth             = {
         client_ssh_key         = ""
         server_ssh_fingerprint = ""
+        client_ssh_user        = ""
       }
     }
   }

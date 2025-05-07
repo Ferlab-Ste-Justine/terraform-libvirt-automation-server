@@ -84,6 +84,7 @@ This module takes the following variables as input:
     - **trusted_gpg_keys**: List of trusted gpp keys to verify the signature of the top commit. If an empty list is passed, the commit signature will not be verified.
     - **auth**: Authentication to the git server. It should have the following keys:
       - **client_ssh_key** Private client ssh key to authentication to the server.
+      - **client_ssh_user**: User to user to identify as with the git server. Can be left empty for many git providers, but some like Gitea require it.
       - **server_ssh_fingerprint**: Public ssh fingerprint of the server that will be used to authentify it.
 - **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
 - **bootstrap_secrets**: List of static secrets to pass to the server. Each entry should have the following keys:
@@ -125,6 +126,7 @@ This module takes the following variables as input:
     - **trusted_gpg_keys**: List of trusted gpp keys to verify the signature of the top commit. If an empty list is passed, the commit signature will not be verified.
     - **auth**: Authentication to the git server. It should have the following keys:
       - **client_ssh_key** Private client ssh key to authentication to the server.
+      - **client_ssh_user**: User to user to identify as with the git server. Can be left empty for many git providers, but some like Gitea require it.
       - **server_ssh_fingerprint**: Public ssh fingerprint of the server that will be used to authentify it.
 - **terraform_backend_etcd**: Parameters to setup an optional http service acting as an etcd backend for terraform. It should have the following keys:
   - **enabled**: If true, the service will be setup and enabled.
