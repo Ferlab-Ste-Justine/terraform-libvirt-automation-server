@@ -79,12 +79,12 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install terraform
-  - curl -L https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip -o /tmp/terraform.zip
+  - curl -L https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip -o /tmp/terraform.zip
   - unzip /tmp/terraform.zip
   - mv terraform /usr/local/bin/terraform
   - rm /tmp/terraform.zip
   #Install terracd
-  - curl -L https://github.com/Ferlab-Ste-Justine/terracd/releases/download/v0.15.0/terracd-linux-amd64.zip -o /tmp/terracd.zip
+  - curl -L https://github.com/Ferlab-Ste-Justine/terracd/releases/download/v0.16.0/terracd-linux-amd64.zip -o /tmp/terracd.zip
   - unzip /tmp/terracd.zip
   - mv linux-amd64/terracd /usr/local/bin/terracd
   - rm -r linux-amd64
